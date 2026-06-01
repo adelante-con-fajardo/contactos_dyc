@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Red DyC — Gestión de Contactos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ─── PANTALLA DE LOGIN ─── -->
+<div id="screen-login" class="screen active">
+  <div class="bg-texture"></div>
+  <div class="login-container">
+    <div class="brand">
+      <div class="brand-icon">SF</div>
+      <h1 class="brand-title">Red <span>DyC</span></h1>
+      <p class="brand-sub">Gestión de Votantes</p>
+    </div>
+
+    <div class="card" id="login-card">
+      <div class="tabs">
+        <button class="tab" data-tab="login">Iniciar Sesión</button>
+        <button class="tab active" data-tab="register">Registrarse</button>
+      </div>
+
+      <!-- Login -->
+      <div class="tab-content" id="tab-login">
+        <div class="field">
+          <label>Número de WhatsApp</label>
+          <div class="input-wrap">
+            <span class="prefix">+57</span>
+            <input type="tel" id="login-phone" placeholder="300 123 4567" maxlength="10"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>PIN (4 dígitos)</label>
+          <div class="pin-inputs">
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+          </div>
+        </div>
+        <button class="btn-primary" id="btn-login">Entrar →</button>
+        <p class="error-msg" id="login-error"></p>
+      </div>
+
+      <!-- Register -->
+      <div class="tab-content active" id="tab-register">
+        <div class="field">
+          <label>Primer Nombre</label>
+          <input type="text" id="reg-name" placeholder="Ej: Carlos"/>
+        </div>
+        <div class="field">
+          <label>Número de WhatsApp</label>
+          <div class="input-wrap">
+            <span class="prefix">+57</span>
+            <input type="tel" id="reg-phone" placeholder="300 123 4567" maxlength="10"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>PIN de 4 dígitos</label>
+          <div class="pin-inputs" id="reg-pins">
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric"/>
+          </div>
+        </div>
+        <button class="btn-primary" id="btn-register">Crear Cuenta →</button>
+        <p class="error-msg" id="reg-error"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PANTALLA PRINCIPAL (Dashboard) ─── -->
+<div id="screen-dashboard" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-icon">SF</span>
+      <span class="topbar-title">Red DyC</span>
+    </div>
+    <div class="topbar-user">
+      <span id="user-greeting">Hola, —</span>
+      <button class="btn-logout" id="btn-logout">Salir</button>
+    </div>
+  </div>
+
+  <div class="dashboard">
+    <div class="dash-header">
+      <div>
+        <h2 class="dash-title">Mis Contactos</h2>
+        <p class="dash-count"><span id="contact-count">0</span> contactos registrados</p>
+      </div>
+      <button class="btn-add" id="btn-open-modal">+ Nuevo Contacto</button>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="🔍  Buscar por nombre, teléfono, ciudad..."/>
+    </div>
+
+    <div id="contacts-grid" class="contacts-grid">
+      <!-- Cards dinámicas -->
+    </div>
+
+    <div id="empty-state" class="empty-state" style="display:none;">
+      <div class="empty-icon">📋</div>
+      <p>Aún no tienes contactos.<br>¡Agrega el primero!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: Agregar / Editar Contacto ─── -->
+<div id="modal-overlay" class="modal-overlay" style="display:none;">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h3 id="modal-title">Nuevo Contacto</h3>
+      <button class="modal-close" id="btn-close-modal">✕</button>
+    </div>
+
+    <div class="modal-body">
+       <div class="field">
+        <label>*No todos los espacios son obligatorios</label>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="c-name" placeholder="Nombre del votante"/>
+        </div>
+        <div class="field">
+          <label>Ciudad / Municipio</label>
+          <input type="text" id="c-city" placeholder="Bogotá, Medellín..."/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Correo Electrónico</label>
+        <input type="email" id="c-email" placeholder="ejemplo@correo.com"/>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>WhatsApp / Celular</label>
+          <input type="tel" id="c-phone" placeholder="+57 300 000 0000"/>
+        </div>
+        <div class="field">
+          <label>TikTok / Otro enlace</label>
+          <input type="text" id="c-tiktok" placeholder="@usuario o link"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Facebook</label>
+          <input type="text" id="c-facebook" placeholder="facebook.com/usuario o @usuario"/>
+        </div>
+        <div class="field">
+          <label>Instagram</label>
+          <input type="text" id="c-instagram" placeholder="@usuario"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notas / Observaciones</label>
+        <textarea id="c-notes" rows="3" placeholder="Información adicional relevante..."></textarea>
+      </div>
+
+      <p class="error-msg" id="contact-error"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-cancel-modal">Cancelar</button>
+      <button class="btn-primary" id="btn-save-contact">Guardar Contacto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: Ver Contacto ─── -->
+<div id="modal-view" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="view-name">—</h3>
+      <button class="modal-close" id="btn-close-view">✕</button>
+    </div>
+    <div class="modal-body" id="view-body">
+      <!-- Dinámico -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-delete-contact">Eliminar</button>
+      <button class="btn-primary" id="btn-edit-contact">Editar</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
